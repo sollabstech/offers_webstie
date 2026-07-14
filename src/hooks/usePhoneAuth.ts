@@ -54,8 +54,24 @@ export function usePhoneAuth(recaptchaContainerId: string) {
         confirmationRef.current = await signInWithPhoneNumber(auth, phone, verifier);
         setPhoneNumber(phone);
         setStep("enter-code");
-      } catch {
-        setError("Could not send verification code. Check the number and try again.");
+      } catch (err) {
+        console.error("[usePhoneAuth] sendCode failed:", err);
+        const code = (err as { code?: string })?.code;
+        const knownMessages: Record<string, string> = {
+          "auth/invalid-app-credential":
+            "Firebase rejected the app credential. In the Firebase Console, enable Authentication → Sign-in method → Phone, and make sure the reCAPTCHA Enterprise API is enabled for this project.",
+          "auth/invalid-phone-number": "That phone number doesn't look valid.",
+          "auth/too-many-requests": "Too many attempts from this device. Please wait and try again.",
+          "auth/quota-exceeded": "SMS quota exceeded for this project.",
+          "auth/unauthorized-domain":
+            "This domain isn't authorized. Add it under Authentication → Settings → Authorized domains.",
+          "auth/billing-not-enabled":
+            "Phone sign-in requires the Firebase project to be on the Blaze (pay-as-you-go) plan.",
+        };
+        setError(
+          (code && knownMessages[code]) ||
+            `Could not send verification code${code ? ` (${code})` : ""}. Check the number and try again.`
+        );
       } finally {
         setLoading(false);
       }

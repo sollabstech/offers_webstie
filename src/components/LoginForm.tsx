@@ -40,23 +40,31 @@ export default function LoginForm() {
           className="flex flex-col gap-4"
           onSubmit={(e) => {
             e.preventDefault();
-            sendCode(phone);
+            sendCode(`+91${phone}`);
           }}
         >
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-text">Mobile number</span>
-            <input
-              type="tel"
-              required
-              placeholder="+1 555 123 4567"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary-light"
-            />
-            <span className="text-xs text-text-muted">Include country code, e.g. +1 for US.</span>
+            <div className="flex overflow-hidden rounded-md border border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary-light">
+              <span className="flex items-center border-r border-border bg-surface-alt px-3 text-sm text-text-muted">
+                +91
+              </span>
+              <input
+                type="tel"
+                required
+                inputMode="numeric"
+                pattern="[0-9]{10}"
+                maxLength={10}
+                placeholder="98765 43210"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                className="flex-1 min-w-0 px-3 py-2 text-sm outline-none"
+              />
+            </div>
+            <span className="text-xs text-text-muted">Enter your 10-digit mobile number.</span>
           </label>
           {error && <p className="text-sm text-danger">{error}</p>}
-          <Button type="submit" disabled={loading} className="w-full">
+          <Button type="submit" disabled={loading || phone.length !== 10} className="w-full">
             {loading ? "Sending code..." : "Send verification code"}
           </Button>
         </form>
