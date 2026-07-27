@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import ProductListing from "@/components/ProductListing";
+import FirestoreProducts from "@/components/FirestoreProducts";
 import { searchProducts, getProductsByCategory, products as allProducts } from "@/data/products";
 
 interface SearchPageProps {
@@ -24,12 +25,22 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     results = results.filter((p) => inCategory.has(p.id));
   }
 
+  const staticIds = new Set(results.map((p) => p.id));
+
   return (
     <>
       <div className="mx-auto max-w-7xl px-4 pt-4">
         <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: q ? `"${q}"` : "All products" }]} />
       </div>
       <ProductListing heading={q ? `Results for "${q}"` : "All products"} products={results} />
+      <div className="mx-auto max-w-7xl px-4 pb-8">
+        <FirestoreProducts
+          excludeIds={staticIds}
+          query={q || undefined}
+          categorySlug={category}
+          heading={results.length === 0 ? undefined : "More products"}
+        />
+      </div>
     </>
   );
 }

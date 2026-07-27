@@ -7,6 +7,7 @@ import {
   type ConfirmationResult,
 } from "firebase/auth";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/lib/firebase";
+import { writeUser } from "@/lib/db";
 
 export type PhoneAuthStep = "enter-phone" | "enter-code" | "verified";
 
@@ -87,8 +88,25 @@ export function usePhoneAuth(recaptchaContainerId: string) {
     }
     setLoading(true);
     try {
-      await confirmationRef.current.confirm(code);
+      const result = await confirmationRef.current.confirm(code);
       setStep("verified");
+
+      // Write/update user profile in Firestore so admin can see sign-ins
+      if (result.user) {
+        const now = new Date().toISOString().split("T")[0];
+        void writeUser({
+          id: result.user.uid,
+          phone: result.user.phoneNumber ?? "",
+          name: result.user.displayName ?? "",
+          email: result.user.email ?? "",
+          status: "active",
+          ordersCount: 0,
+          totalSpent: 0,
+          joinedAt: now,
+          lastLoginAt: now,
+          avatar: `https://placehold.co/40x40/f97316/ffffff?text=${(result.user.phoneNumber ?? "U")[1]?.toUpperCase() ?? "U"}`,
+        });
+      }
     } catch {
       setError("Invalid code. Please try again.");
     } finally {

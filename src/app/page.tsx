@@ -1,18 +1,11 @@
-import Image from "next/image";
 import Link from "next/link";
-import Carousel from "@/components/Carousel";
 import CategoryCardModule, { buildTilesFromCategory } from "@/components/CategoryCardModule";
 import PillLinks from "@/components/PillLinks";
 import ProductGrid from "@/components/ProductGrid";
+import FirestoreProducts from "@/components/FirestoreProducts";
+import BannerCarousel from "@/components/BannerCarousel";
 import { categories } from "@/data/categories";
 import { trendingProducts, dealProducts } from "@/data/products";
-import { categoryImageUrl } from "@/data/imageKeywords";
-
-const HERO_SLIDES = [
-  { id: "hero-1", label: "Big Deals on Electronics", categorySlug: "electronics" },
-  { id: "hero-2", label: "Refresh Your Home", categorySlug: "home" },
-  { id: "hero-3", label: "New Season Fashion", categorySlug: "fashion" },
-];
 
 export default function HomePage() {
   const moduleCategories = categories.slice(0, 4);
@@ -20,30 +13,7 @@ export default function HomePage() {
   return (
     <main>
       <div className="mx-auto max-w-7xl px-4 pt-4">
-        <Carousel
-          className="h-48 sm:h-64 md:h-80"
-          slides={HERO_SLIDES.map((slide) => ({
-            id: slide.id,
-            content: (
-              <div className="relative h-48 w-full sm:h-64 md:h-80">
-                <Image
-                  src={categoryImageUrl(slide.categorySlug, 1600, 500)}
-                  alt={slide.label}
-                  fill
-                  priority
-                  sizes="100vw"
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-                <div className="absolute inset-0 flex items-center px-6 sm:px-10">
-                  <h2 className="max-w-md text-2xl font-bold text-white drop-shadow sm:text-3xl md:text-4xl">
-                    {slide.label}
-                  </h2>
-                </div>
-              </div>
-            ),
-          }))}
-        />
+        <BannerCarousel />
       </div>
 
       <section className="mx-auto max-w-7xl px-4 py-6" aria-label="Shop by category">
@@ -85,6 +55,10 @@ export default function HomePage() {
           </Link>
         </div>
         <ProductGrid products={trendingProducts} />
+        <FirestoreProducts
+          excludeIds={new Set([...trendingProducts, ...dealProducts].map((p) => p.id))}
+          heading="New Arrivals"
+        />
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-12">

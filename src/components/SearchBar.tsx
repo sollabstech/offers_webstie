@@ -58,7 +58,7 @@ export default function SearchBar({ className }: SearchBarProps) {
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         placeholder="Search products, brands and categories"
-        className="w-full min-w-0 flex-1 bg-surface px-3 py-2 text-sm outline-none"
+        className="w-full min-w-0 flex-1 bg-surface px-3 py-2 text-sm text-foreground placeholder:text-text-muted outline-none"
       />
       <button
         type="submit"

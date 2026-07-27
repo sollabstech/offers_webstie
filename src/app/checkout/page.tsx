@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
 import { useOrdersStore } from "@/store/ordersStore";
+import { getFirebaseAuth } from "@/lib/firebase";
+import { writeOrder } from "@/lib/db";
 import { products } from "@/data/products";
 import { formatPrice, generateOrderId } from "@/utils/format";
 import CheckoutStepper from "@/components/CheckoutStepper";
@@ -12,9 +14,62 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import type { Address } from "@/types";
 
 const PAYMENT_METHODS = [
-  { id: "card", label: "Credit / Debit Card (demo)" },
-  { id: "upi", label: "UPI (demo)" },
-  { id: "cod", label: "Cash on Delivery" },
+  {
+    id: "phonepe",
+    label: "PhonePe",
+    tag: "UPI",
+    color: "#5f259f",
+    logo: (
+      <svg viewBox="0 0 40 40" fill="none" className="h-8 w-8">
+        <rect width="40" height="40" rx="8" fill="#5f259f" />
+        <path d="M27.5 13.5h-5.2L16 20.5l6.3 7h5.2l-6.3-7 6.3-7z" fill="#fff" />
+        <circle cx="14.5" cy="20.5" r="2.5" fill="#fff" />
+      </svg>
+    ),
+  },
+  {
+    id: "gpay",
+    label: "Google Pay",
+    tag: "UPI",
+    color: "#4285f4",
+    logo: (
+      <svg viewBox="0 0 40 40" fill="none" className="h-8 w-8">
+        <rect width="40" height="40" rx="8" fill="#fff" stroke="#e5e7eb" />
+        <text x="50%" y="56%" dominantBaseline="middle" textAnchor="middle" fontSize="10" fontWeight="bold">
+          <tspan fill="#4285f4">G</tspan>
+          <tspan fill="#ea4335">P</tspan>
+          <tspan fill="#fbbc05">a</tspan>
+          <tspan fill="#34a853">y</tspan>
+        </text>
+      </svg>
+    ),
+  },
+  {
+    id: "paytm",
+    label: "Paytm",
+    tag: "Wallet / UPI",
+    color: "#00baf2",
+    logo: (
+      <svg viewBox="0 0 40 40" fill="none" className="h-8 w-8">
+        <rect width="40" height="40" rx="8" fill="#00baf2" />
+        <text x="50%" y="58%" dominantBaseline="middle" textAnchor="middle" fontSize="9" fontWeight="bold" fill="#fff">Paytm</text>
+      </svg>
+    ),
+  },
+  { id: "card", label: "Credit / Debit Card", tag: "Card", color: "#64748b", logo: (
+    <svg viewBox="0 0 40 40" fill="none" className="h-8 w-8">
+      <rect width="40" height="40" rx="8" fill="#1e293b" />
+      <rect x="6" y="13" width="28" height="4" rx="1" fill="#94a3b8" />
+      <rect x="6" y="22" width="8" height="3" rx="1" fill="#64748b" />
+      <rect x="17" y="22" width="6" height="3" rx="1" fill="#64748b" />
+    </svg>
+  )},
+  { id: "cod", label: "Cash on Delivery", tag: "COD", color: "#16a34a", logo: (
+    <svg viewBox="0 0 40 40" fill="none" className="h-8 w-8">
+      <rect width="40" height="40" rx="8" fill="#dcfce7" />
+      <text x="50%" y="58%" dominantBaseline="middle" textAnchor="middle" fontSize="16" fill="#16a34a">₹</text>
+    </svg>
+  )},
 ];
 
 const EMPTY_ADDRESS: Address = {
@@ -24,14 +79,13 @@ const EMPTY_ADDRESS: Address = {
   city: "",
   state: "",
   postalCode: "",
-  country: "United States",
+  country: "India",
   phone: "",
 };
 
 /**
  * Mock multi-step checkout: Address -> Payment -> Review -> Place Order.
- * No real payment collection is implemented; "Place Order" simply records a
- * mock order and redirects to the confirmation screen.
+ * On completion writes the order to Firestore so the admin panel can see it.
  */
 export default function CheckoutPage() {
   const router = useRouter();
@@ -55,8 +109,13 @@ export default function CheckoutPage() {
     [address]
   );
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     const orderId = generateOrderId();
+    const now = new Date().toISOString();
+    const auth = getFirebaseAuth();
+    const firebaseUser = auth?.currentUser;
+
+    // Save to local store (existing behavior)
     addOrder({
       id: orderId,
       items: lines,
@@ -64,9 +123,34 @@ export default function CheckoutPage() {
       paymentMethod,
       subtotal,
       total,
-      placedAt: new Date().toISOString(),
+      placedAt: now,
       status: "Placed",
     });
+
+    // Also write to Firestore so admin can see this order
+    void writeOrder({
+      id: orderId,
+      userId: firebaseUser?.uid ?? "guest",
+      userName: address.fullName,
+      userEmail: firebaseUser?.email ?? "",
+      userPhone: firebaseUser?.phoneNumber ?? address.phone,
+      items: items.map(({ line, product }) => ({
+        productId: line.productId,
+        productName: product?.title ?? "",
+        productImage: product?.images?.[0] ?? "",
+        quantity: line.quantity,
+        price: product?.price ?? 0,
+      })),
+      subtotal,
+      total,
+      shippingAddress: `${address.fullName}, ${address.line1}, ${address.city}, ${address.state} ${address.postalCode}, ${address.country}`,
+      address,
+      paymentMethod,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
+    });
+
     clearCart();
     router.push(`/checkout/confirmation?order=${orderId}`);
   };
@@ -135,21 +219,41 @@ export default function CheckoutPage() {
           {step === 1 && (
             <div className="flex flex-col gap-4">
               <p className="text-sm text-text-muted">
-                This is a demo checkout — no real payment details are collected.
+                Select a payment method. This is a demo checkout — no real payment is processed.
               </p>
-              <fieldset className="flex flex-col gap-2">
+              <fieldset className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <legend className="sr-only">Payment method</legend>
-                {PAYMENT_METHODS.map((method) => (
-                  <label key={method.id} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm">
-                    <input
-                      type="radio"
-                      name="payment-method"
-                      checked={paymentMethod === method.id}
-                      onChange={() => setPaymentMethod(method.id)}
-                    />
-                    {method.label}
-                  </label>
-                ))}
+                {PAYMENT_METHODS.map((method) => {
+                  const selected = paymentMethod === method.id;
+                  return (
+                    <label
+                      key={method.id}
+                      className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-3 transition-all ${
+                        selected
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border bg-surface hover:border-primary/40"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment-method"
+                        className="sr-only"
+                        checked={selected}
+                        onChange={() => setPaymentMethod(method.id)}
+                      />
+                      {method.logo}
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-text">{method.label}</span>
+                        <span className="text-xs text-text-muted">{method.tag}</span>
+                      </div>
+                      {selected && (
+                        <svg className="ml-auto h-4 w-4 shrink-0 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </label>
+                  );
+                })}
               </fieldset>
               <div className="flex gap-2">
                 <Button variant="secondary" onClick={() => setStep(0)}>Back</Button>

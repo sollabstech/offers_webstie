@@ -2,6 +2,7 @@
 
 import { initializeApp, getApps, type FirebaseOptions } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
 
 // TODO: replace with real Firebase project credentials.
 // Create a project at https://console.firebase.google.com, enable
@@ -21,12 +22,20 @@ export function isFirebaseConfigured(): boolean {
 }
 
 let auth: Auth | null = null;
+let db: Firestore | null = null;
+
+function getApp() {
+  return getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+}
 
 export function getFirebaseAuth(): Auth | null {
   if (!isFirebaseConfigured()) return null;
-  if (!auth) {
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-    auth = getAuth(app);
-  }
+  if (!auth) auth = getAuth(getApp());
   return auth;
+}
+
+export function getFirebaseDb(): Firestore | null {
+  if (!isFirebaseConfigured()) return null;
+  if (!db) db = getFirestore(getApp());
+  return db;
 }
