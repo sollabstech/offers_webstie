@@ -10,12 +10,14 @@ import MobileDrawer from "@/components/ui/MobileDrawer";
 import { useCartStore } from "@/store/cartStore";
 import { useAddressStore } from "@/store/addressStore";
 import { useHasMounted } from "@/hooks/useHasMounted";
+import { useAuthState } from "@/hooks/useAuthState";
 import { categories } from "@/data/categories";
 
 /** Sticky site header: logo, delivery indicator, search, account/orders/cart, category row. */
 export default function Header() {
   const storeTotalItems = useCartStore((s) => s.totalItems());
   const savedAddress = useAddressStore((s) => s.address);
+  const { user, signOut } = useAuthState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
@@ -76,7 +78,7 @@ export default function Header() {
             >
               <User size={18} />
               <span>
-                Hello, sign in
+                {user ? `Hello, ${user.displayName?.split(" ")[0] ?? "User"}` : "Hello, sign in"}
                 <br />
                 <strong>Account &amp; Lists</strong>
               </span>
@@ -86,16 +88,35 @@ export default function Header() {
                 role="menu"
                 className="absolute right-0 top-full mt-2 w-56 rounded-md border border-border bg-surface p-3 text-text shadow-lg"
               >
-                <Link href="/account/login" className="block rounded bg-accent px-3 py-2 text-center text-sm text-white hover:bg-accent-dark">
-                  Sign in
-                </Link>
-                <p className="mt-2 text-xs text-text-muted">
-                  New customer? <Link href="/account/login" className="text-primary underline">Start here</Link>
-                </p>
-                <hr className="my-2 border-border" />
-                <Link href="/account" className="block py-1 text-sm hover:text-primary">Your Account</Link>
-                <Link href="/orders" className="block py-1 text-sm hover:text-primary">Your Orders</Link>
-                <Link href="/wishlist" className="block py-1 text-sm hover:text-primary">Your Wishlist</Link>
+                {user ? (
+                  <>
+                    <p className="mb-2 truncate text-xs font-medium text-text-muted">{user.email}</p>
+                    <hr className="mb-2 border-border" />
+                    <Link href="/account" onClick={() => setAccountOpen(false)} className="block py-1 text-sm hover:text-primary">Your Account</Link>
+                    <Link href="/orders" onClick={() => setAccountOpen(false)} className="block py-1 text-sm hover:text-primary">Your Orders</Link>
+                    <Link href="/wishlist" onClick={() => setAccountOpen(false)} className="block py-1 text-sm hover:text-primary">Your Wishlist</Link>
+                    <hr className="my-2 border-border" />
+                    <button
+                      onClick={() => { void signOut(); setAccountOpen(false); }}
+                      className="block w-full rounded bg-red-500 px-3 py-2 text-center text-sm text-white hover:bg-red-600"
+                    >
+                      Sign out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/account/login" onClick={() => setAccountOpen(false)} className="block rounded bg-accent px-3 py-2 text-center text-sm text-white hover:bg-accent-dark">
+                      Sign in
+                    </Link>
+                    <p className="mt-2 text-xs text-text-muted">
+                      New customer? <Link href="/account/login" className="text-primary underline">Start here</Link>
+                    </p>
+                    <hr className="my-2 border-border" />
+                    <Link href="/account" onClick={() => setAccountOpen(false)} className="block py-1 text-sm hover:text-primary">Your Account</Link>
+                    <Link href="/orders" onClick={() => setAccountOpen(false)} className="block py-1 text-sm hover:text-primary">Your Orders</Link>
+                    <Link href="/wishlist" onClick={() => setAccountOpen(false)} className="block py-1 text-sm hover:text-primary">Your Wishlist</Link>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -126,13 +147,22 @@ export default function Header() {
 
       <MobileDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} title="Menu" side="left">
         <div className="p-4">
-          <Link
-            href="/account/login"
-            onClick={() => setMobileMenuOpen(false)}
-            className="mb-4 flex items-center gap-2 rounded-md bg-primary-light px-3 py-2 text-sm font-medium text-primary"
-          >
-            <User size={18} /> Sign in / Register
-          </Link>
+          {user ? (
+            <button
+              onClick={() => { void signOut(); setMobileMenuOpen(false); }}
+              className="mb-4 flex w-full items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-600"
+            >
+              <User size={18} /> Sign out ({user.displayName?.split(" ")[0] ?? "User"})
+            </button>
+          ) : (
+            <Link
+              href="/account/login"
+              onClick={() => setMobileMenuOpen(false)}
+              className="mb-4 flex items-center gap-2 rounded-md bg-primary-light px-3 py-2 text-sm font-medium text-primary"
+            >
+              <User size={18} /> Sign in / Register
+            </Link>
+          )}
           <Link
             href="/orders"
             onClick={() => setMobileMenuOpen(false)}
