@@ -77,12 +77,14 @@ export async function writeUser(user: FirestoreUser): Promise<void> {
   await setDoc(doc(db, "users", user.id), user, { merge: true });
 }
 
-export async function fetchOrdersByUser(userId: string): Promise<FirestoreOrder[]> {
+export async function fetchOrdersByUser(userId: string, userEmail?: string): Promise<FirestoreOrder[]> {
   const db = getDb();
   if (!db) return [];
-  const { where } = await import("firebase/firestore");
-  const snap = await getDocs(query(collection(db, "orders"), where("userId", "==", userId), orderBy("createdAt", "desc")));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as FirestoreOrder));
+  const snap = await getDocs(collection(db, "orders"));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreOrder))
+    .filter((o) => o.userId === userId || (userEmail && o.userEmail === userEmail))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 // ─── Products (read from Firestore — written by admin) ───────────────────────

@@ -17,7 +17,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (!user) return;
-    fetchOrdersByUser(user.uid).then(setFirestoreOrders);
+    fetchOrdersByUser(user.uid, user.email ?? undefined).then(setFirestoreOrders);
   }, [user]);
 
   // Merge: Firestore is source of truth; local orders fill in if not already there
