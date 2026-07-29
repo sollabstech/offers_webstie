@@ -87,6 +87,41 @@ export async function fetchOrdersByUser(userId: string, userEmail?: string): Pro
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+// ─── Returns ────────────────────────────────────────────────────────────────
+
+export interface FirestoreReturn {
+  id: string;
+  orderId: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  productId: string;
+  productName: string;
+  productImage: string;
+  reason: string;
+  details: string;
+  type: "return" | "replace";
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function writeReturn(r: FirestoreReturn): Promise<void> {
+  const db = getDb();
+  if (!db) return;
+  await setDoc(doc(db, "returns", r.id), r);
+}
+
+export async function fetchReturnsByUser(userId: string, userEmail?: string): Promise<FirestoreReturn[]> {
+  const db = getDb();
+  if (!db) return [];
+  const snap = await getDocs(collection(db, "returns"));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as FirestoreReturn))
+    .filter((r) => r.userId === userId || (userEmail && r.userEmail === userEmail))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 // ─── Products (read from Firestore — written by admin) ───────────────────────
 
 export interface FirestoreProduct {

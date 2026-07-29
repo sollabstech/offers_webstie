@@ -63,6 +63,25 @@ export interface Address {
   phone: string;
 }
 
+export type ReturnStatus = "pending" | "approved" | "rejected";
+
+export interface ReturnRequest {
+  id: string;
+  orderId: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  productId: string;
+  productName: string;
+  productImage: string;
+  reason: string;
+  details: string;
+  type: "return" | "replace";
+  status: ReturnStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Order {
   id: string;
   items: CartLine[];
