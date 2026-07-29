@@ -164,7 +164,7 @@ export default function SearchBar({ className }: SearchBarProps) {
                   product.title
                 )}
               </span>
-              <span className="shrink-0 text-xs text-text-muted">{product.category}</span>
+              <span className="shrink-0 text-xs text-text-muted">{product.categorySlug}</span>
             </li>
           ))}
         </ul>
