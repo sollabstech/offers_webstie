@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
 import { useOrdersStore } from "@/store/ordersStore";
+import { useAddressStore } from "@/store/addressStore";
 import { getFirebaseAuth } from "@/lib/firebase";
 import { writeOrder } from "@/lib/db";
 import { products } from "@/data/products";
@@ -92,9 +93,10 @@ export default function CheckoutPage() {
   const lines = useCartStore((s) => s.lines);
   const clearCart = useCartStore((s) => s.clear);
   const addOrder = useOrdersStore((s) => s.addOrder);
+  const savedAddress = useAddressStore((s) => s.address);
 
   const [step, setStep] = useState(0);
-  const [address, setAddress] = useState<Address>(EMPTY_ADDRESS);
+  const [address, setAddress] = useState<Address>(savedAddress ?? EMPTY_ADDRESS);
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0].id);
 
   const items = lines

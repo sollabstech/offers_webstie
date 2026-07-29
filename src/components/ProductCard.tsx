@@ -48,18 +48,18 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         <p className="mb-1 text-xs text-text-muted">{product.brand}</p>
-        <h3 className="mb-1 line-clamp-2 text-sm font-medium text-text">{product.title}</h3>
+        <h3 className="mb-1 line-clamp-2 min-h-[2.5rem] text-sm font-medium text-text leading-5">{product.title}</h3>
       </Link>
 
       <RatingStars rating={product.rating} reviewCount={product.reviewCount} />
 
-      <div className="mt-2">
+      <div className="mt-2 min-h-[3rem]">
         <PriceTag price={product.price} originalPrice={product.originalPrice} currency={product.currency} />
       </div>
 
       <Button
         size="sm"
-        className="mt-3 w-full"
+        className="mt-auto w-full"
         onClick={() => addItem(product.id, 1)}
         aria-label={`Add ${product.title} to cart`}
       >

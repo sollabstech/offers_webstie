@@ -14,10 +14,14 @@ const PAGE_SIZE = 12;
 interface ProductListingProps {
   heading: string;
   products: Product[];
+  /** When true, hides the "0 results / No products found" empty state — used when Firestore products supplement the list */
+  firestoreSupplementing?: boolean;
+  /** Extra count from Firestore to add to the displayed total */
+  firestoreCount?: number;
 }
 
 /** Shared listing UI for Category and Search Results pages: filters, sort, grid, pagination. */
-export default function ProductListing({ heading, products }: ProductListingProps) {
+export default function ProductListing({ heading, products, firestoreSupplementing, firestoreCount = 0 }: ProductListingProps) {
   const brands = useMemo(() => Array.from(new Set(products.map((p) => p.brand))).sort(), [products]);
   const maxPrice = useMemo(() => Math.ceil(Math.max(...products.map((p) => p.price), 100)), [products]);
 
@@ -84,7 +88,7 @@ export default function ProductListing({ heading, products }: ProductListingProp
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-text">{heading}</h1>
         <div className="flex items-center gap-3">
-          <p className="text-sm text-text-muted">{filtered.length} results</p>
+          <p className="text-sm text-text-muted">{filtered.length + firestoreCount} results</p>
           <label className="flex items-center gap-2 text-sm">
             <span className="sr-only">Sort by</span>
             <select
@@ -116,7 +120,7 @@ export default function ProductListing({ heading, products }: ProductListingProp
         </aside>
 
         <div className="flex-1">
-          <ProductGrid products={pageItems} />
+          <ProductGrid products={pageItems} emptyMessage={firestoreSupplementing ? "" : "No products found."} />
 
           {totalPages > 1 && (
             <nav aria-label="Pagination" className="mt-8 flex justify-center gap-2">

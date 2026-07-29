@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 const TILES = [
   { href: "/orders", icon: Package, title: "Your Orders", description: "Track, return, or buy again" },
   { href: "/wishlist", icon: Heart, title: "Your Wishlist", description: "Items you've saved for later" },
-  { href: "/account", icon: MapPin, title: "Addresses", description: "Edit shipping addresses (demo)" },
-  { href: "/account/login", icon: LogIn, title: "Login & Security", description: "Sign in with your mobile number" },
+  { href: "/account/address", icon: MapPin, title: "Addresses", description: "Add or edit your delivery address" },
+  { href: "/account/login", icon: LogIn, title: "Login & Security", description: "" },
 ];
 
 export default function AccountPage() {
@@ -29,7 +29,7 @@ export default function AccountPage() {
           >
             <tile.icon className="text-primary" size={22} />
             <h2 className="text-sm font-semibold text-text">{tile.title}</h2>
-            <p className="text-xs text-text-muted">{tile.description}</p>
+            {tile.description && <p className="text-xs text-text-muted">{tile.description}</p>}
           </Link>
         ))}
       </div>

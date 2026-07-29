@@ -6,14 +6,14 @@ import ProductCard from "@/components/ProductCard";
 import type { Product } from "@/types";
 
 interface Props {
-  /** IDs already shown by the static layer — avoids duplicates */
   excludeIds?: Set<string>;
   query?: string;
   categorySlug?: string;
   heading?: string;
+  onCount?: (n: number) => void;
 }
 
-export default function FirestoreProducts({ excludeIds, query, categorySlug, heading }: Props) {
+export default function FirestoreProducts({ excludeIds, query, categorySlug, heading, onCount }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
@@ -30,8 +30,9 @@ export default function FirestoreProducts({ excludeIds, query, categorySlug, hea
         );
       }
       setProducts(filtered);
+      onCount?.(filtered.length);
     });
-  }, [excludeIds, query, categorySlug]);
+  }, [excludeIds, query, categorySlug, onCount]);
 
   if (products.length === 0) return null;
 

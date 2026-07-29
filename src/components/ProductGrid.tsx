@@ -8,6 +8,7 @@ interface ProductGridProps {
 
 export default function ProductGrid({ products, emptyMessage = "No products found." }: ProductGridProps) {
   if (products.length === 0) {
+    if (!emptyMessage) return null;
     return <p className="py-12 text-center text-text-muted">{emptyMessage}</p>;
   }
   return (

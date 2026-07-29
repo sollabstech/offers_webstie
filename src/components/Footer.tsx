@@ -9,8 +9,6 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     links: [
       { label: "About us", href: "/about" },
       { label: "Careers", href: "/careers" },
-      { label: "Press releases", href: "/press" },
-      { label: "Sustainability", href: "/sustainability" },
     ],
   },
   {
@@ -20,6 +18,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "Instagram", href: "https://instagram.com" },
       { label: "X / Twitter", href: "https://x.com" },
       { label: "YouTube", href: "https://youtube.com" },
+      { label: "WhatsApp", href: "https://whatsapp.com" },
     ],
   },
   {

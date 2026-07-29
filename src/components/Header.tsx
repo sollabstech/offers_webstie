@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { MapPin, User, Package, ShoppingCart, Menu } from "lucide-react";
 import Logo from "@/components/Logo";
@@ -8,14 +8,28 @@ import SearchBar from "@/components/SearchBar";
 import CategoryNav from "@/components/CategoryNav";
 import MobileDrawer from "@/components/ui/MobileDrawer";
 import { useCartStore } from "@/store/cartStore";
+import { useAddressStore } from "@/store/addressStore";
 import { useHasMounted } from "@/hooks/useHasMounted";
 import { categories } from "@/data/categories";
 
 /** Sticky site header: logo, delivery indicator, search, account/orders/cart, category row. */
 export default function Header() {
   const storeTotalItems = useCartStore((s) => s.totalItems());
+  const savedAddress = useAddressStore((s) => s.address);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!accountOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setAccountOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [accountOpen]);
 
   // The cart count is persisted to localStorage, so it can differ from the
   // server-rendered value. Show 0 until after the first client render to
@@ -38,21 +52,21 @@ export default function Header() {
         <Logo className="shrink-0" />
 
         <Link
-          href="/account"
+          href="/account/address"
           className="hidden shrink-0 items-center gap-1 text-xs leading-tight hover:text-accent md:flex"
         >
           <MapPin size={16} />
           <span>
             Deliver to
             <br />
-            <strong>New York 10001</strong>
+            <strong>{mounted && savedAddress ? `${savedAddress.city} ${savedAddress.postalCode}` : "Add address"}</strong>
           </span>
         </Link>
 
         <SearchBar className="mx-1 hidden flex-1 md:flex" />
 
         <div className="ml-auto flex items-center gap-4">
-          <div className="relative hidden md:block">
+          <div ref={accountRef} className="relative hidden md:block">
             <button
               type="button"
               onClick={() => setAccountOpen((o) => !o)}
