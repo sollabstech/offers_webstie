@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import CategoryPageContent from "@/components/CategoryPageContent";
 import ProductListing from "@/components/ProductListing";
 import { findCategoryBySlug } from "@/data/categories";
 import { getProductsByCategory, dealProducts } from "@/data/products";
@@ -44,7 +45,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       <div className="mx-auto max-w-7xl px-4 pt-4">
         <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: category.name }]} />
       </div>
-      <ProductListing heading={category.name} products={products} />
+      <CategoryPageContent heading={category.name} staticProducts={products} categorySlug={slug} />
     </>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, ChevronRight } from "lucide-react";
 import { categories } from "@/data/categories";
 import MobileDrawer from "@/components/ui/MobileDrawer";
@@ -11,6 +12,7 @@ const QUICK_LINKS = categories.slice(0, 7);
 /** Second-row category navigation: "All" mega menu trigger, quick links, and a promo banner link. */
 export default function CategoryNav() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <nav aria-label="Category navigation" className="border-b border-border bg-primary text-white">
@@ -24,15 +26,22 @@ export default function CategoryNav() {
           All
         </button>
 
-        {QUICK_LINKS.map((cat) => (
-          <Link
-            key={cat.id}
-            href={`/category/${cat.slug}`}
-            className="shrink-0 whitespace-nowrap text-sm hover:text-accent"
-          >
-            {cat.name}
-          </Link>
-        ))}
+        {QUICK_LINKS.map((cat) => {
+          const active = pathname === `/category/${cat.slug}`;
+          return (
+            <Link
+              key={cat.id}
+              href={`/category/${cat.slug}`}
+              className={`shrink-0 whitespace-nowrap text-sm font-medium transition-colors ${
+                active
+                  ? "text-accent underline underline-offset-4 decoration-2"
+                  : "hover:text-accent"
+              }`}
+            >
+              {cat.name}
+            </Link>
+          );
+        })}
 
         <Link
           href="/category/deals"

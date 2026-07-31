@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import type { Product } from "@/types";
 import ProductGrid from "@/components/ProductGrid";
@@ -27,6 +27,11 @@ export default function ProductListing({ heading, products, firestoreSupplementi
 
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [priceCeiling, setPriceCeiling] = useState(maxPrice);
+
+  // Sync price ceiling when the product set expands (e.g. Firestore products load in)
+  useEffect(() => {
+    setPriceCeiling(maxPrice);
+  }, [maxPrice]);
   const [minRating, setMinRating] = useState(0);
   const [sort, setSort] = useState<SortKey>("relevance");
   const [page, setPage] = useState(1);
@@ -84,7 +89,7 @@ export default function ProductListing({ heading, products, firestoreSupplementi
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
+    <div className="mx-auto max-w-7xl px-4 pb-6 pt-3">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-semibold text-text">{heading}</h1>
         <div className="flex items-center gap-3">
