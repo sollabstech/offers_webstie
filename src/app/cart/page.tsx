@@ -1,11 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
-import { products } from "@/data/products";
+import { products as staticProducts } from "@/data/products";
+import { getFirestoreProducts } from "@/lib/firestoreProducts";
 import { formatPrice } from "@/utils/format";
+import type { Product } from "@/types";
 import QuantityStepper from "@/components/QuantityStepper";
 import Button from "@/components/ui/Button";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -14,9 +17,17 @@ export default function CartPage() {
   const lines = useCartStore((s) => s.lines);
   const setQuantity = useCartStore((s) => s.setQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
+  const [allProducts, setAllProducts] = useState<Product[]>(staticProducts);
+
+  useEffect(() => {
+    getFirestoreProducts().then((fp) => {
+      const staticIds = new Set(staticProducts.map((p) => p.id));
+      setAllProducts([...staticProducts, ...fp.filter((p) => !staticIds.has(p.id))]);
+    });
+  }, []);
 
   const items = lines
-    .map((line) => ({ line, product: products.find((p) => p.id === line.productId) }))
+    .map((line) => ({ line, product: allProducts.find((p) => p.id === line.productId) }))
     .filter((entry) => entry.product);
 
   const subtotal = items.reduce((sum, { line, product }) => sum + (product?.price ?? 0) * line.quantity, 0);
@@ -40,7 +51,8 @@ export default function CartPage() {
             {items.map(({ line, product }) => (
               <li key={`${line.productId}-${line.variantId ?? "base"}`} className="flex gap-4 p-4">
                 <Link href={`/product/${product!.slug}`} className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md bg-surface-alt">
-                  <Image src={product!.images[0]} alt={product!.title} fill sizes="96px" className="object-cover" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={product!.images[0]} alt={product!.title} className="h-full w-full object-cover" />
                 </Link>
                 <div className="flex flex-1 flex-col justify-between">
                   <div>

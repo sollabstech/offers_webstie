@@ -74,7 +74,7 @@ export default function ProductPurchasePanel({ product }: ProductPurchasePanelPr
       </p>
 
       <div className="hidden flex-col gap-2 sm:flex">
-        <Button onClick={handleAddToCart} variant="secondary" disabled={product.stock === 0}>
+        <Button onClick={handleAddToCart} variant="secondary" disabled={product.stock === 0} className="hover:bg-[#f07a00] hover:text-white hover:border-[#f07a00]">
           Add to Cart
         </Button>
         <Button onClick={handleBuyNow} variant="accent" disabled={product.stock === 0}>
@@ -83,7 +83,7 @@ export default function ProductPurchasePanel({ product }: ProductPurchasePanelPr
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-border bg-surface p-3 sm:hidden">
-        <Button onClick={handleAddToCart} variant="secondary" className="flex-1" disabled={product.stock === 0}>
+        <Button onClick={handleAddToCart} variant="secondary" className="flex-1 hover:bg-[#f07a00] hover:text-white hover:border-[#f07a00]" disabled={product.stock === 0}>
           Add to Cart
         </Button>
         <Button onClick={handleBuyNow} variant="accent" className="flex-1" disabled={product.stock === 0}>

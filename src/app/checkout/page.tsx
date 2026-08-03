@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
 import { useOrdersStore } from "@/store/ordersStore";
 import { useAddressStore } from "@/store/addressStore";
 import { getFirebaseAuth } from "@/lib/firebase";
 import { writeOrder } from "@/lib/db";
-import { products } from "@/data/products";
+import { products as staticProducts } from "@/data/products";
+import { getFirestoreProducts } from "@/lib/firestoreProducts";
 import { formatPrice, generateOrderId } from "@/utils/format";
+import type { Product } from "@/types";
 import CheckoutStepper from "@/components/CheckoutStepper";
 import Button from "@/components/ui/Button";
 import Breadcrumbs from "@/components/Breadcrumbs";
@@ -98,9 +100,19 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(0);
   const [address, setAddress] = useState<Address>(savedAddress ?? EMPTY_ADDRESS);
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0].id);
+  const [allProducts, setAllProducts] = useState<Product[]>(staticProducts);
+  const [productsLoading, setProductsLoading] = useState(staticProducts.length === 0);
+
+  useEffect(() => {
+    getFirestoreProducts().then((fp) => {
+      const staticIds = new Set(staticProducts.map((p) => p.id));
+      setAllProducts([...staticProducts, ...fp.filter((p) => !staticIds.has(p.id))]);
+      setProductsLoading(false);
+    });
+  }, []);
 
   const items = lines
-    .map((line) => ({ line, product: products.find((p) => p.id === line.productId) }))
+    .map((line) => ({ line, product: allProducts.find((p) => p.id === line.productId) }))
     .filter((entry) => entry.product);
   const subtotal = items.reduce((sum, { line, product }) => sum + (product?.price ?? 0) * line.quantity, 0);
   const shipping = subtotal > 0 && subtotal < 50 ? 5.99 : 0;
@@ -156,6 +168,14 @@ export default function CheckoutPage() {
     clearCart();
     router.push(`/checkout/confirmation?order=${orderId}`);
   };
+
+  if (productsLoading) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-10 text-center">
+        <p className="text-text-muted">Loading checkout...</p>
+      </main>
+    );
+  }
 
   if (items.length === 0) {
     return (

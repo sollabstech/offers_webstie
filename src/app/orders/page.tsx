@@ -6,7 +6,9 @@ import { Package, X } from "lucide-react";
 import { useOrdersStore } from "@/store/ordersStore";
 import { useAuthState } from "@/hooks/useAuthState";
 import { fetchOrdersByUser, writeReturn, fetchReturnsByUser, type FirestoreOrder, type FirestoreReturn } from "@/lib/db";
-import { products } from "@/data/products";
+import { products as staticProducts } from "@/data/products";
+import { getFirestoreProducts } from "@/lib/firestoreProducts";
+import type { Product } from "@/types";
 import { formatPrice } from "@/utils/format";
 import Breadcrumbs from "@/components/Breadcrumbs";
 
@@ -148,6 +150,14 @@ export default function OrdersPage() {
   const [firestoreOrders, setFirestoreOrders] = useState<FirestoreOrder[]>([]);
   const [myReturns, setMyReturns] = useState<FirestoreReturn[]>([]);
   const [returnModal, setReturnModal] = useState<FirestoreOrder | null>(null);
+  const [allProducts, setAllProducts] = useState<Product[]>(staticProducts);
+
+  useEffect(() => {
+    getFirestoreProducts().then((fp) => {
+      const staticIds = new Set(staticProducts.map((p) => p.id));
+      setAllProducts([...staticProducts, ...fp.filter((p) => !staticIds.has(p.id))]);
+    });
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -167,7 +177,7 @@ export default function OrdersPage() {
         userEmail: user?.email ?? "",
         userPhone: "",
         items: o.items.map((i) => {
-          const p = products.find((p) => p.id === i.productId);
+          const p = allProducts.find((p) => p.id === i.productId);
           return { productId: i.productId, productName: p?.title ?? "", productImage: p?.images[0] ?? "", quantity: i.quantity, price: p?.price ?? 0 };
         }),
         subtotal: o.total, total: o.total, shippingAddress: "", address: {},
@@ -240,7 +250,7 @@ export default function OrdersPage() {
                 {/* Items */}
                 <div className="divide-y divide-border">
                   {order.items.map((line) => {
-                    const imgSrc = line.productImage || products.find((p) => p.id === line.productId)?.images[0];
+                    const imgSrc = line.productImage || allProducts.find((p) => p.id === line.productId)?.images[0];
                     return (
                       <div key={line.productId} className="flex items-center gap-4 px-5 py-4">
                         <div className="h-16 w-16 shrink-0 rounded-lg bg-surface-alt overflow-hidden border border-border">

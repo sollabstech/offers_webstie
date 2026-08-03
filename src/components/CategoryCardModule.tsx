@@ -13,7 +13,7 @@ interface CategoryCardModuleProps {
 export default function CategoryCardModule({ title, tiles, seeMoreHref }: CategoryCardModuleProps) {
   return (
     <div className="flex h-full flex-col rounded-lg border border-border bg-surface p-4">
-      <h3 className="mb-3 text-base font-semibold text-text">{title}</h3>
+      <h3 className="mb-1.5 text-base font-semibold text-text">{title}</h3>
       <div className="grid grid-cols-2 gap-2">
         {tiles.slice(0, 4).map((tile) => (
           <Link key={tile.label} href={tile.href} className="group">
