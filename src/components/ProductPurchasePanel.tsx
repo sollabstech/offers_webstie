@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { CheckCircle2, ShoppingCart } from "lucide-react";
 import type { Product } from "@/types";
 import QuantityStepper from "@/components/QuantityStepper";
 import Button from "@/components/ui/Button";
@@ -17,6 +18,8 @@ export default function ProductPurchasePanel({ product }: ProductPurchasePanelPr
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
   const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const variantGroups = useMemo(() => {
     const groups = new Map<string, typeof product.variants>();
@@ -32,11 +35,31 @@ export default function ProductPurchasePanel({ product }: ProductPurchasePanelPr
     product.variants?.[0]?.id
   );
 
-  const handleAddToCart = () => addItem(product.id, quantity, selectedVariant);
+  const handleAddToCart = () => {
+    addItem(product.id, quantity, selectedVariant);
+    setAdded(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setAdded(false), 2000);
+  };
+
   const handleBuyNow = () => {
     addItem(product.id, quantity, selectedVariant);
     router.push("/checkout");
   };
+
+  const addToCartClass = added
+    ? "bg-green-500 border-green-500 text-white hover:bg-green-600 hover:text-white hover:border-green-600 scale-[1.02]"
+    : "hover:bg-gray-100 hover:text-black hover:border-gray-300";
+
+  const addToCartLabel = added ? (
+    <span className="flex items-center justify-center gap-2">
+      <CheckCircle2 size={17} /> Added to Cart!
+    </span>
+  ) : (
+    <span className="flex items-center justify-center gap-2">
+      <ShoppingCart size={17} /> Add to Cart
+    </span>
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -73,18 +96,30 @@ export default function ProductPurchasePanel({ product }: ProductPurchasePanelPr
         {product.stock > 0 ? `In stock (${product.stock} available)` : "Out of stock"}
       </p>
 
+      {/* Desktop buttons */}
       <div className="hidden flex-col gap-2 sm:flex">
-        <Button onClick={handleAddToCart} variant="secondary" disabled={product.stock === 0} className="hover:bg-[#f07a00] hover:text-white hover:border-[#f07a00]">
-          Add to Cart
+        <Button
+          onClick={handleAddToCart}
+          variant="secondary"
+          disabled={product.stock === 0}
+          className={cn("transition-all duration-200", addToCartClass)}
+        >
+          {addToCartLabel}
         </Button>
         <Button onClick={handleBuyNow} variant="accent" disabled={product.stock === 0}>
           Buy Now
         </Button>
       </div>
 
+      {/* Mobile sticky bar */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-border bg-surface p-3 sm:hidden">
-        <Button onClick={handleAddToCart} variant="secondary" className="flex-1 hover:bg-[#f07a00] hover:text-white hover:border-[#f07a00]" disabled={product.stock === 0}>
-          Add to Cart
+        <Button
+          onClick={handleAddToCart}
+          variant="secondary"
+          disabled={product.stock === 0}
+          className={cn("flex-1 transition-all duration-200", addToCartClass)}
+        >
+          {addToCartLabel}
         </Button>
         <Button onClick={handleBuyNow} variant="accent" className="flex-1" disabled={product.stock === 0}>
           Buy Now

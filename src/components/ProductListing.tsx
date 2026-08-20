@@ -18,10 +18,12 @@ interface ProductListingProps {
   firestoreSupplementing?: boolean;
   /** Extra count from Firestore to add to the displayed total */
   firestoreCount?: number;
+  /** Extra content rendered inside the right column (below the product grid) */
+  supplementContent?: React.ReactNode;
 }
 
 /** Shared listing UI for Category and Search Results pages: filters, sort, grid, pagination. */
-export default function ProductListing({ heading, products, firestoreSupplementing, firestoreCount = 0 }: ProductListingProps) {
+export default function ProductListing({ heading, products, firestoreSupplementing, firestoreCount = 0, supplementContent }: ProductListingProps) {
   const brands = useMemo(() => Array.from(new Set(products.map((p) => p.brand))).sort(), [products]);
   const maxPrice = useMemo(() => Math.ceil(Math.max(...products.map((p) => p.price), 100)), [products]);
 
@@ -126,6 +128,9 @@ export default function ProductListing({ heading, products, firestoreSupplementi
 
         <div className="flex-1">
           <ProductGrid products={pageItems} emptyMessage={firestoreSupplementing ? "" : "No products found."} />
+
+          {/* Firestore supplement (e.g. extra products from backend) — rendered inside the right column */}
+          {supplementContent}
 
           {totalPages > 1 && (
             <nav aria-label="Pagination" className="mt-8 flex justify-center gap-2">

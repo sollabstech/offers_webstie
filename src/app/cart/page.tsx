@@ -18,15 +18,21 @@ export default function CartPage() {
   const setQuantity = useCartStore((s) => s.setQuantity);
   const removeItem = useCartStore((s) => s.removeItem);
   const [allProducts, setAllProducts] = useState<Product[]>(staticProducts);
+  const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Wait for Zustand to hydrate from localStorage
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     getFirestoreProducts().then((fp) => {
       const staticIds = new Set(staticProducts.map((p) => p.id));
       setAllProducts([...staticProducts, ...fp.filter((p) => !staticIds.has(p.id))]);
-    });
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
-  const items = lines
+  const items = (!mounted || loading ? [] : lines)
     .map((line) => ({ line, product: allProducts.find((p) => p.id === line.productId) }))
     .filter((entry) => entry.product);
 
@@ -38,7 +44,13 @@ export default function CartPage() {
       <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Cart" }]} />
       <h1 className="mb-6 text-2xl font-semibold text-text">Your Cart</h1>
 
-      {items.length === 0 ? (
+      {(!mounted || loading) ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-28 animate-pulse rounded-lg bg-surface-alt" />
+          ))}
+        </div>
+      ) : items.length === 0 ? (
         <div className="rounded-lg border border-border bg-surface p-10 text-center">
           <p className="mb-4 text-text-muted">Your cart is empty.</p>
           <Link href="/" className="text-primary underline">

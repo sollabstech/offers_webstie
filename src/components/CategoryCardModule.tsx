@@ -7,32 +7,37 @@ interface CategoryCardModuleProps {
   title: string;
   tiles: { label: string; href: string; slug: string }[];
   seeMoreHref: string;
+  colorClass?: string;
 }
 
 /** Merchandising card module: title, 2x2 image tile grid, and a "See more" link. */
-export default function CategoryCardModule({ title, tiles, seeMoreHref }: CategoryCardModuleProps) {
+export default function CategoryCardModule({ title, tiles, seeMoreHref, colorClass = "from-primary to-primary-dark" }: CategoryCardModuleProps) {
   return (
-    <div className="flex h-full flex-col rounded-lg border border-border bg-surface p-4">
-      <h3 className="mb-1.5 text-base font-semibold text-text">{title}</h3>
-      <div className="grid grid-cols-2 gap-2">
-        {tiles.slice(0, 4).map((tile) => (
-          <Link key={tile.label} href={tile.href} className="group">
-            <div className="relative aspect-square overflow-hidden rounded-md bg-surface-alt">
-              <Image
-                src={categoryImageUrl(tile.slug, 300, 300)}
-                alt={tile.label}
-                fill
-                sizes="150px"
-                className="object-cover transition-transform group-hover:scale-105"
-              />
-            </div>
-            <p className="mt-1 truncate text-xs text-text-muted group-hover:text-primary">{tile.label}</p>
-          </Link>
-        ))}
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-surface shadow-sm transition-shadow hover:shadow-md">
+      <div className={`bg-gradient-to-r ${colorClass} px-4 py-3 text-center`}>
+        <h3 className="text-base font-semibold text-white">{title}</h3>
       </div>
-      <Link href={seeMoreHref} className="mt-3 text-sm font-medium text-primary hover:underline">
-        See more
-      </Link>
+      <div className="flex flex-1 flex-col p-4">
+        <div className="grid grid-cols-2 gap-2">
+          {tiles.slice(0, 4).map((tile) => (
+            <Link key={tile.label} href={tile.href} className="group">
+              <div className="relative aspect-square overflow-hidden rounded-xl bg-surface-alt">
+                <Image
+                  src={categoryImageUrl(tile.slug, 300, 300)}
+                  alt={tile.label}
+                  fill
+                  sizes="150px"
+                  className="object-cover transition-transform group-hover:scale-105"
+                />
+              </div>
+              <p className="mt-1 truncate text-xs text-text-muted group-hover:text-primary">{tile.label}</p>
+            </Link>
+          ))}
+        </div>
+        <Link href={seeMoreHref} className="mt-3 block text-center text-sm font-medium text-accent hover:underline">
+          See more →
+        </Link>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart } from "lucide-react";
+import { Heart, CheckCircle2 } from "lucide-react";
+import { useState, useRef } from "react";
 import type { Product } from "@/types";
 import RatingStars from "@/components/ui/RatingStars";
 import PriceTag from "@/components/ui/PriceTag";
@@ -20,9 +21,18 @@ export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
   const toggleWishlist = useWishlistStore((s) => s.toggle);
   const isWishlisted = useWishlistStore((s) => s.has(product.id));
+  const [added, setAdded] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleAddToCart = () => {
+    addItem(product.id, 1);
+    setAdded(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setAdded(false), 2000);
+  };
 
   return (
-    <div className="group relative flex h-full flex-col rounded-lg border border-border bg-surface p-3 transition-shadow hover:shadow-md">
+    <div className="group relative flex h-full flex-col rounded-2xl bg-surface p-3 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
       <button
         type="button"
         aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
@@ -59,11 +69,16 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <Button
         size="sm"
-        className="mt-auto w-full"
-        onClick={() => addItem(product.id, 1)}
+        variant="accent"
+        className={`mt-auto w-full rounded-full transition-all duration-200 ${added ? "bg-green-500 border-green-500 hover:bg-green-600 scale-[1.02]" : ""}`}
+        onClick={handleAddToCart}
         aria-label={`Add ${product.title} to cart`}
       >
-        Add to Cart
+        {added ? (
+          <span className="flex items-center justify-center gap-1.5">
+            <CheckCircle2 size={15} /> Added!
+          </span>
+        ) : "Add to Cart"}
       </Button>
     </div>
   );

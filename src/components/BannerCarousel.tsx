@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Carousel from "@/components/Carousel";
-import { categoryImageUrl } from "@/data/imageKeywords";
 
 interface FirestoreBanner {
   id: string;
@@ -15,13 +14,7 @@ interface FirestoreBanner {
   order: number;
 }
 
-const FALLBACK_SLIDES = [
-  { id: "hero-1", title: "Big Deals on Electronics", imageUrl: categoryImageUrl("electronics", 1600, 500), linkHref: "/category/electronics" },
-  { id: "hero-2", title: "Refresh Your Home", imageUrl: categoryImageUrl("home", 1600, 500), linkHref: "/category/home" },
-  { id: "hero-3", title: "New Season Fashion", imageUrl: categoryImageUrl("fashion", 1600, 500), linkHref: "/category/fashion" },
-];
-
-function BannerSlide({ banner }: { banner: { id: string; title: string; imageUrl: string; linkHref: string } }) {
+function BannerSlide({ banner }: { banner: FirestoreBanner }) {
   const inner = (
     <div className="relative h-48 w-full sm:h-64 md:h-80">
       <Image
@@ -31,7 +24,12 @@ function BannerSlide({ banner }: { banner: { id: string; title: string; imageUrl
         priority
         sizes="100vw"
         className="object-cover"
-        unoptimized={banner.imageUrl.startsWith("http") && !banner.imageUrl.includes("unsplash.com") && !banner.imageUrl.includes("placehold.co")}
+        unoptimized={
+          banner.imageUrl.startsWith("data:") ||
+          (banner.imageUrl.startsWith("http") &&
+            !banner.imageUrl.includes("unsplash.com") &&
+            !banner.imageUrl.includes("placehold.co"))
+        }
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
       <div className="absolute inset-0 flex items-center px-6 sm:px-10">
@@ -44,11 +42,12 @@ function BannerSlide({ banner }: { banner: { id: string; title: string; imageUrl
 
   return banner.linkHref ? (
     <Link href={banner.linkHref} className="block">{inner}</Link>
-  ) : inner;
+  ) : <>{inner}</>;
 }
 
 export default function BannerCarousel() {
-  const [slides, setSlides] = useState(FALLBACK_SLIDES);
+  const [slides, setSlides] = useState<FirestoreBanner[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let unsub: (() => void) | null = null;
@@ -56,28 +55,47 @@ export default function BannerCarousel() {
     async function init() {
       try {
         const { isFirebaseConfigured } = await import("@/lib/firebase");
-        if (!isFirebaseConfigured()) return;
+        if (!isFirebaseConfigured()) {
+          setLoading(false);
+          return;
+        }
 
-        const { getFirestore, collection, query, orderBy, onSnapshot, where } = await import("firebase/firestore");
+        const { getFirestore, collection, query, where, onSnapshot } = await import("firebase/firestore");
         const { getApp } = await import("firebase/app");
         const firestoreDb = getFirestore(getApp());
 
+        // Simple query — no orderBy to avoid composite index requirement; sort client-side
         unsub = onSnapshot(
-          query(collection(firestoreDb, "banners"), where("active", "==", true), orderBy("order", "asc")),
+          query(collection(firestoreDb, "banners"), where("active", "==", true)),
           (snap) => {
-            const data = snap.docs.map((d) => ({ id: d.id, ...d.data() } as FirestoreBanner));
-            if (data.length > 0) setSlides(data);
+            const data = snap.docs
+              .map((d) => ({ id: d.id, ...d.data() } as FirestoreBanner))
+              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            setSlides(data);
+            setLoading(false);
           },
-          () => {} // silently ignore errors (e.g. missing index) and keep fallback
+          () => { setLoading(false); }
         );
       } catch {
-        // Firebase not available — use fallback
+        setLoading(false);
       }
     }
 
     void init();
     return () => unsub?.();
   }, []);
+
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className="h-48 w-full animate-pulse rounded-xl bg-surface-alt sm:h-64 md:h-80" />
+    );
+  }
+
+  // No banners in admin — show nothing
+  if (slides.length === 0) {
+    return null;
+  }
 
   return (
     <Carousel

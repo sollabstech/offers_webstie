@@ -28,19 +28,21 @@ export default function SearchResults({ heading, staticProducts, query, category
         products={staticProducts}
         firestoreSupplementing={noStaticResults}
         firestoreCount={firestoreCount ?? 0}
+        supplementContent={
+          <>
+            <FirestoreProducts
+              excludeIds={staticIds}
+              query={query}
+              categorySlug={categorySlug}
+              heading={noStaticResults ? undefined : "More products"}
+              onCount={handleCount}
+            />
+            {showNoResults && (
+              <p className="py-10 text-center text-text-muted">No products found.</p>
+            )}
+          </>
+        }
       />
-      <div className="mx-auto max-w-7xl px-4 pb-8">
-        <FirestoreProducts
-          excludeIds={staticIds}
-          query={query}
-          categorySlug={categorySlug}
-          heading={noStaticResults ? undefined : "More products"}
-          onCount={handleCount}
-        />
-        {showNoResults && (
-          <p className="py-10 text-center text-text-muted">No products found.</p>
-        )}
-      </div>
     </>
   );
 }

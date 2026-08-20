@@ -3,8 +3,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { categories } from "@/data/categories";
-import { searchProducts } from "@/data/products";
+import { products as staticProducts } from "@/data/products";
+import { getFirestoreProducts } from "@/lib/firestoreProducts";
+import type { Product } from "@/types";
+
+interface FirestoreCategory { id: string; name: string; slug: string; order: number; }
 
 interface SearchBarProps {
   className?: string;
@@ -16,12 +19,53 @@ export default function SearchBar({ className }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [allProducts, setAllProducts] = useState<Product[]>(staticProducts);
+  const [dropdownCats, setDropdownCats] = useState<FirestoreCategory[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Compute suggestions whenever query changes
-  const suggestions = query.trim().length > 0
-    ? searchProducts(query).slice(0, 7)
+  // Load Firestore categories for dropdown
+  useEffect(() => {
+    let unsub: (() => void) | null = null;
+    async function init() {
+      try {
+        const { isFirebaseConfigured } = await import("@/lib/firebase");
+        if (!isFirebaseConfigured()) return;
+        const { getFirestore, collection, query: fsQuery, where, onSnapshot } = await import("firebase/firestore");
+        const { getApp } = await import("firebase/app");
+        const db = getFirestore(getApp());
+        unsub = onSnapshot(
+          fsQuery(collection(db, "categories"), where("active", "==", true)),
+          (snap) => {
+            const data = snap.docs
+              .map((d) => ({ id: d.id, ...d.data() } as FirestoreCategory))
+              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            setDropdownCats(data);
+          },
+          () => {}
+        );
+      } catch { /* silent */ }
+    }
+    void init();
+    return () => unsub?.();
+  }, []);
+
+  // Load Firestore products once for suggestions
+  useEffect(() => {
+    getFirestoreProducts().then((fp) => {
+      const staticIds = new Set(staticProducts.map((p) => p.id));
+      setAllProducts([...staticProducts, ...fp.filter((p) => !staticIds.has(p.id))]);
+    });
+  }, []);
+
+  // Compute suggestions from all products whenever query changes
+  const q = query.trim().toLowerCase();
+  const suggestions = q.length > 0
+    ? allProducts.filter((p) =>
+        p.title.toLowerCase().includes(q) ||
+        p.brand?.toLowerCase().includes(q) ||
+        p.categorySlug?.toLowerCase().includes(q)
+      ).slice(0, 8)
     : [];
 
   const showDropdown = focused && suggestions.length > 0;
@@ -79,19 +123,24 @@ export default function SearchBar({ className }: SearchBarProps) {
       <form
         role="search"
         onSubmit={handleSubmit}
-        className={`flex w-full overflow-hidden rounded-md border transition-shadow ${
-          focused ? "border-accent ring-2 ring-accent/30" : "border-border"
+        className={`flex w-full overflow-hidden rounded-full border-2 transition-all ${
+          focused ? "border-accent shadow-lg shadow-accent/20" : "border-white/30 shadow-md"
         }`}
       >
         <label className="sr-only" htmlFor="search-category">Search category</label>
         <select
           id="search-category"
           value={scope}
-          onChange={(e) => setScope(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            setScope(val);
+            if (val === "all") router.push("/");
+            else router.push(`/category/${val}`);
+          }}
           className="hidden shrink-0 border-r border-border bg-surface-alt px-2 text-xs text-text-muted sm:block"
         >
           <option value="all">All categories</option>
-          {categories.map((c) => (
+          {dropdownCats.map((c) => (
             <option key={c.id} value={c.slug}>{c.name}</option>
           ))}
         </select>
@@ -106,7 +155,7 @@ export default function SearchBar({ className }: SearchBarProps) {
           onChange={(e) => { setQuery(e.target.value); setFocused(true); }}
           onFocus={() => setFocused(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search products, brands and categories"
+          placeholder="Search for products, brands and more..."
           className="w-full min-w-0 flex-1 bg-surface px-3 py-2 text-sm text-foreground placeholder:text-text-muted outline-none"
           aria-autocomplete="list"
           aria-expanded={showDropdown}
@@ -126,7 +175,7 @@ export default function SearchBar({ className }: SearchBarProps) {
         <button
           type="submit"
           aria-label="Search"
-          className="shrink-0 bg-accent px-3 text-white hover:bg-accent-dark"
+          className="shrink-0 bg-accent px-5 py-2 text-white hover:bg-accent-dark transition-colors"
         >
           <Search size={18} />
         </button>

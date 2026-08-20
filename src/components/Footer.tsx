@@ -22,7 +22,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     ],
   },
   {
-    title: "Make Money with Us",
+    title: "Grow with Offerss",
     links: [
       { label: "Sell on Offerss.com", href: "/sell" },
       { label: "Become an affiliate", href: "/affiliate" },
@@ -31,7 +31,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     ],
   },
   {
-    title: "Let Us Help You",
+    title: "Support Center",
     links: [
       { label: "Your Account", href: "/account" },
       { label: "Your Orders", href: "/orders" },
@@ -45,7 +45,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
 /** Multi-column footer with a back-to-top bar and legal bottom bar; collapses to an accordion on mobile. */
 export default function Footer() {
   return (
-    <footer className="mt-10 bg-primary text-white">
+    <footer className="mt-10 bg-gradient-to-b from-primary to-primary-dark text-white">
       <button
         type="button"
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}

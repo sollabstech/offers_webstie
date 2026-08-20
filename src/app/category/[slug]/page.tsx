@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import CategoryPageContent from "@/components/CategoryPageContent";
 import ProductListing from "@/components/ProductListing";
@@ -10,14 +9,19 @@ interface CategoryPageProps {
   params: Promise<{ slug: string }>;
 }
 
+/** Convert a slug like "mens-dress" → "Mens Dress" as a fallback display name. */
+function slugToName(slug: string) {
+  return slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  if (slug === "deals") return { title: "Today's Deals" };
+  if (slug === "deals") return { title: "Flash Offers" };
   const category = findCategoryBySlug(slug);
-  if (!category) return { title: "Category not found" };
+  const name = category?.name ?? slugToName(slug);
   return {
-    title: category.name,
-    description: `Shop ${category.name} at Offerss.com. Compare prices, ratings and reviews.`,
+    title: name,
+    description: `Shop ${name} at Offerss.com. Compare prices, ratings and reviews.`,
   };
 }
 
@@ -28,24 +32,24 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     return (
       <>
         <div className="mx-auto max-w-7xl px-4 pt-4">
-          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Today's Deals" }]} />
+          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Flash Offers" }]} />
         </div>
-        <ProductListing heading="Today's Deals" products={dealProducts} />
+        <ProductListing heading="Flash Offers" products={dealProducts} />
       </>
     );
   }
 
+  // Try static data first; fall back gracefully so Firestore-only categories still work
   const category = findCategoryBySlug(slug);
-  if (!category) notFound();
-
-  const products = getProductsByCategory(slug);
+  const name = category?.name ?? slugToName(slug);
+  const products = category ? getProductsByCategory(slug) : [];
 
   return (
     <>
       <div className="mx-auto max-w-7xl px-4 pt-4">
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: category.name }]} />
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: name }]} />
       </div>
-      <CategoryPageContent heading={category.name} staticProducts={products} categorySlug={slug} />
+      <CategoryPageContent heading={name} staticProducts={products} categorySlug={slug} />
     </>
   );
 }
