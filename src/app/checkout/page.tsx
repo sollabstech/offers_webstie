@@ -18,6 +18,19 @@ import type { Address } from "@/types";
 
 const PAYMENT_METHODS = [
   {
+    id: "razorpay",
+    label: "Razorpay",
+    tag: "Card / UPI / Wallet",
+    color: "#2563eb",
+    logo: (
+      <svg viewBox="0 0 40 40" fill="none" className="h-8 w-8">
+        <rect width="40" height="40" rx="8" fill="#2563eb" />
+        <text x="50%" y="58%" dominantBaseline="middle" textAnchor="middle" fontSize="7.5" fontWeight="bold" fill="#fff">Razor</text>
+        <text x="50%" y="78%" dominantBaseline="middle" textAnchor="middle" fontSize="7.5" fontWeight="bold" fill="#fff">pay</text>
+      </svg>
+    ),
+  },
+  {
     id: "phonepe",
     label: "PhonePe",
     tag: "UPI",
@@ -123,25 +136,24 @@ export default function CheckoutPage() {
     [address]
   );
 
-  const placeOrder = async () => {
+  /** Finalise the order in local state + Firestore after payment is confirmed. */
+  const finaliseOrder = async (method: string) => {
     const orderId = generateOrderId();
     const now = new Date().toISOString();
     const auth = getFirebaseAuth();
     const firebaseUser = auth?.currentUser;
 
-    // Save to local store (existing behavior)
     addOrder({
       id: orderId,
       items: lines,
       address,
-      paymentMethod,
+      paymentMethod: method,
       subtotal,
       total,
       placedAt: now,
       status: "Placed",
     });
 
-    // Also write to Firestore so admin can see this order
     void writeOrder({
       id: orderId,
       userId: firebaseUser?.uid ?? "guest",
@@ -159,7 +171,7 @@ export default function CheckoutPage() {
       total,
       shippingAddress: `${address.fullName}, ${address.line1}, ${address.city}, ${address.state} ${address.postalCode}, ${address.country}`,
       address,
-      paymentMethod,
+      paymentMethod: method,
       status: "pending",
       createdAt: now,
       updatedAt: now,
@@ -167,6 +179,75 @@ export default function CheckoutPage() {
 
     clearCart();
     router.push(`/checkout/confirmation?order=${orderId}`);
+  };
+
+  const [rzpError, setRzpError] = useState("");
+  const [rzpLoading, setRzpLoading] = useState(false);
+
+  const placeOrder = async () => {
+    if (paymentMethod === "razorpay") {
+      setRzpError("");
+      setRzpLoading(true);
+      try {
+        // 1. Create order server-side (keeps secret safe)
+        const res = await fetch("/api/razorpay/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: total, currency: "INR" }),
+        });
+        const data = await res.json() as { orderId?: string; amount?: number; keyId?: string; error?: string };
+        if (!res.ok || data.error) {
+          setRzpError(data.error ?? "Could not create Razorpay order.");
+          setRzpLoading(false);
+          return;
+        }
+
+        // 2. Load Razorpay checkout.js if not already loaded
+        if (!document.getElementById("rzp-script")) {
+          await new Promise<void>((resolve, reject) => {
+            const s = document.createElement("script");
+            s.id = "rzp-script";
+            s.src = "https://checkout.razorpay.com/v1/checkout.js";
+            s.onload = () => resolve();
+            s.onerror = () => reject(new Error("Failed to load Razorpay SDK"));
+            document.head.appendChild(s);
+          });
+        }
+
+        // 3. Open Razorpay modal
+        const options = {
+          key: data.keyId,
+          amount: data.amount,
+          currency: "INR",
+          order_id: data.orderId,
+          name: "Offerss.com",
+          description: "Order Payment",
+          prefill: {
+            name: address.fullName,
+            contact: address.phone,
+          },
+          theme: { color: "#f97316" },
+          handler: () => {
+            // Payment successful — finalise the order
+            finaliseOrder("razorpay");
+          },
+          modal: {
+            ondismiss: () => setRzpLoading(false),
+          },
+        };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+        setRzpLoading(false);
+      } catch (err) {
+        setRzpError(err instanceof Error ? err.message : "Razorpay error. Try again.");
+        setRzpLoading(false);
+      }
+      return;
+    }
+
+    // Non-Razorpay methods — existing mock flow
+    await finaliseOrder(paymentMethod);
   };
 
   if (productsLoading) {
@@ -311,9 +392,14 @@ export default function CheckoutPage() {
                   ))}
                 </ul>
               </div>
+              {rzpError && (
+                <p className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">{rzpError}</p>
+              )}
               <div className="flex gap-2">
                 <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
-                <Button variant="accent" onClick={placeOrder}>Place Order</Button>
+                <Button variant="accent" onClick={placeOrder} disabled={rzpLoading}>
+                  {rzpLoading ? "Opening payment…" : "Place Order"}
+                </Button>
               </div>
             </div>
           )}

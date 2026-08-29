@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand palette derived from the Offerss.com logo (navy + orange) */
-  --color-primary: #10213f;
-  --color-primary-dark: #0a1730;
-  --color-primary-light: #e7ecf5;
-  --color-accent: #f2790f;
-  --color-accent-dark: #d6640a;
+  /* Brand palette — exact colours from the Offerss.com logo */
+  --color-primary: #0d1b3e;        /* deep navy (logo background) */
+  --color-primary-dark: #091230;   /* darker navy for hover/gradients */
+  --color-primary-light: #e6eaf5;  /* light navy tint for backgrounds */
+  --color-accent: #ff6600;         /* vivid orange (logo "Off" text + icon) */
+  --color-accent-dark: #e05a00;    /* darker orange for hover states */
   --color-surface: #ffffff;
   --color-surface-alt: #f4f6f9;
-  --color-border: #e2e6ed;
-  --color-text: #131a26;
+  --color-border: #dde2ed;
+  --color-text: #0d1b3e;
   --color-text-muted: #5c6673;
   --color-success: #1f9254;
   --color-danger: #d92d20;
 
-  --background: #eef2f8;
+  --background: #eef1f8;
   --foreground: var(--color-text);
 }
 
