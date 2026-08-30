@@ -54,7 +54,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 bg-primary text-white">
       {/* Main header row */}
-      <div className="mx-auto max-w-7xl px-4 py-3">
+      <div className="mx-auto max-w-7xl px-4 py-1">
         <div className="flex items-center gap-6">
 
           {/* Mobile hamburger */}

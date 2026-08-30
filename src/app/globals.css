@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand palette — exact colours from the Offerss.com logo */
-  --color-primary: #0d1b3e;        /* deep navy (logo background) */
-  --color-primary-dark: #091230;   /* darker navy for hover/gradients */
-  --color-primary-light: #e6eaf5;  /* light navy tint for backgrounds */
-  --color-accent: #ff6600;         /* vivid orange (logo "Off" text + icon) */
-  --color-accent-dark: #e05a00;    /* darker orange for hover states */
-  --color-surface: #ffffff;
+  /* Official Offerss.com brand palette */
+  --color-primary: #071744;        /* Primary Navy 60% — header, backgrounds */
+  --color-primary-dark: #040e2c;   /* Darker navy for hover/gradients */
+  --color-primary-light: #e6eaf5;  /* Light navy tint for backgrounds */
+  --color-accent: #ff8a00;         /* Primary Orange 15% — logo, buttons, highlights */
+  --color-accent-dark: #e07a00;    /* Darker orange for hover states */
+  --color-surface: #ffffff;        /* White 25% — text, clean backgrounds */
   --color-surface-alt: #f4f6f9;
   --color-border: #dde2ed;
-  --color-text: #0d1b3e;
+  --color-text: #071744;
   --color-text-muted: #5c6673;
   --color-success: #1f9254;
   --color-danger: #d92d20;
