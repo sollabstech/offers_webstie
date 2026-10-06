@@ -2,18 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "dev",
-      "runtimeExecutable": "C:\\Program Files\\nodejs\\npm.cmd",
-      "runtimeArgs": ["run", "dev"],
-      "port": 3000,
-      "autoPort": true
-    },
-    {
-      "name": "offers-admin-dev",
-      "runtimeExecutable": "C:\\Program Files\\nodejs\\npm.cmd",
-      "runtimeArgs": ["run", "dev"],
-      "cwd": "C:\\Users\\sollabstech\\Desktop\\offers_adminal",
-      "port": 3001
+      "name": "offers-webstie-3006",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "3006"],
+      "port": 3006
     }
   ]
 }
