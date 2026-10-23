@@ -48,6 +48,33 @@ export interface FirestoreOrder {
   status: string;
   createdAt: string;
   updatedAt: string;
+  /** Total shipping charge collected (sum of shipments[].finalCharge). */
+  shippingCharge?: number;
+  /** One entry per vendor whose products are in this order; set at checkout, filled in by the admin panel as each vendor's items ship. */
+  shipments?: FirestoreOrderShipment[];
+}
+
+export interface FirestoreOrderShipment {
+  vendorId: string;
+  vendorName: string;
+  status: "not_shipped" | "shipped" | "cancelled";
+  /** "self" = admin booked the courier outside Shiprocket and entered courierName + awbCode (tracking ID) by hand. */
+  shippingMethod?: "shiprocket" | "self";
+  shippedAt?: string;
+  courierName?: string;
+  etd?: string;
+  /** What's actually charged (shiprocketRate + delivery commission). Shown to customer & vendor. */
+  finalCharge?: number;
+  /** Breakdown — admin-only display, kept separate so the actual cost and the commission never get blended. */
+  shiprocketRate?: number;
+  marginType?: "fixed" | "percentage";
+  marginValue?: number;
+  marginAmount?: number;
+  codCharge?: number;
+  awbCode?: string;
+  trackingUrl?: string;
+  deliveryStatus?: string;
+  lastLocation?: string;
 }
 
 export async function writeOrder(order: FirestoreOrder): Promise<void> {

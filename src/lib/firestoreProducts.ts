@@ -15,10 +15,24 @@ const CATEGORY_SLUG_MAP: Record<string, string> = {
   Food: "food",
 };
 
+/** Live sponsored products first (by admin-assigned rank, then higher bid); everything else keeps its order. */
+export function sponsoredFirst(list: Product[]): Product[] {
+  const sponsored = list
+    .filter((p) => p.sponsoredRank != null)
+    .sort((a, b) => a.sponsoredRank! - b.sponsoredRank! || (b.sponsoredBid ?? 0) - (a.sponsoredBid ?? 0));
+  if (sponsored.length === 0) return list;
+  return [...sponsored, ...list.filter((p) => p.sponsoredRank == null)];
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapAdminProduct(data: any, id: string): Product {
   const category = data.category ?? "";
+  const sponsored =
+    typeof data.promotedRank === "number" &&
+    typeof data.promotedUntil === "string" &&
+    new Date(data.promotedUntil).getTime() > Date.now();
   return {
+    ...(sponsored ? { sponsoredRank: data.promotedRank, sponsoredBid: data.promotedBid ?? 0, badge: "Sponsored" as const } : {}),
     id,
     slug: data.slug ?? id,
     title: data.name ?? "",
@@ -44,12 +58,14 @@ export async function getFirestoreProducts(): Promise<Product[]> {
   if (!db) return [];
   try {
     const snap = await getDocs(collection(db, "products"));
-    return snap.docs
-      .filter((d) => {
-        const vendorStatus = d.data().vendorStatus;
-        return !vendorStatus || vendorStatus === "active";
-      })
-      .map((d) => mapAdminProduct(d.data(), d.id));
+    return sponsoredFirst(
+      snap.docs
+        .filter((d) => {
+          const vendorStatus = d.data().vendorStatus;
+          return !vendorStatus || vendorStatus === "active";
+        })
+        .map((d) => mapAdminProduct(d.data(), d.id))
+    );
   } catch {
     return [];
   }

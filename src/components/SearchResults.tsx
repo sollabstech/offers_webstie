@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import type { Product } from "@/types";
 import ProductListing from "@/components/ProductListing";
-import FirestoreProducts from "@/components/FirestoreProducts";
+import { getFirestoreProducts } from "@/lib/firestoreProducts";
 
 interface Props {
   heading: string;
@@ -13,36 +13,33 @@ interface Props {
 }
 
 export default function SearchResults({ heading, staticProducts, query, categorySlug }: Props) {
-  const [firestoreCount, setFirestoreCount] = useState<number | null>(null);
-  const handleCount = useCallback((n: number) => setFirestoreCount(n), []);
+  const [firestoreProducts, setFirestoreProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const staticIds = new Set(staticProducts.map((p) => p.id));
-  const noStaticResults = staticProducts.length === 0;
-  // firestoreCount is null while still loading — only show "no results" once it resolves to 0
-  const showNoResults = noStaticResults && firestoreCount === 0;
+  useEffect(() => {
+    const staticIds = new Set(staticProducts.map((p) => p.id));
+    const q = query?.toLowerCase();
+    getFirestoreProducts().then((all) => {
+      setFirestoreProducts(
+        all.filter(
+          (p) =>
+            !staticIds.has(p.id) &&
+            (!categorySlug || p.categorySlug === categorySlug) &&
+            (!q ||
+              p.title.toLowerCase().includes(q) ||
+              p.brand.toLowerCase().includes(q) ||
+              p.tags.some((t) => t.toLowerCase().includes(q)))
+        )
+      );
+      setLoading(false);
+    });
+  }, [staticProducts, query, categorySlug]);
 
   return (
-    <>
-      <ProductListing
-        heading={heading}
-        products={staticProducts}
-        firestoreSupplementing={noStaticResults}
-        firestoreCount={firestoreCount ?? 0}
-        supplementContent={
-          <>
-            <FirestoreProducts
-              excludeIds={staticIds}
-              query={query}
-              categorySlug={categorySlug}
-              heading={noStaticResults ? undefined : "More products"}
-              onCount={handleCount}
-            />
-            {showNoResults && (
-              <p className="py-10 text-center text-text-muted">No products found.</p>
-            )}
-          </>
-        }
-      />
-    </>
+    <ProductListing
+      heading={heading}
+      products={[...staticProducts, ...firestoreProducts]}
+      firestoreSupplementing={loading && staticProducts.length === 0}
+    />
   );
 }

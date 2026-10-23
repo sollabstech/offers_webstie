@@ -28,16 +28,29 @@ export interface RazorpayConfig {
   keySecret: string;
 }
 
-/** Read Razorpay credentials saved by the admin panel (Firestore: settings/razorpay). */
+/**
+ * Resolve Razorpay credentials. Order of precedence:
+ *   1. Keys saved via the admin panel (Firestore: settings/razorpay)
+ *   2. Environment variables (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET)
+ */
 export async function getRazorpayConfig(): Promise<RazorpayConfig | null> {
-  if (!isConfigured()) return null;
-  try {
-    const snap = await getDoc(doc(getDb(), "settings", "razorpay"));
-    if (!snap.exists()) return null;
-    const data = snap.data();
-    if (!data.keyId || !data.keySecret) return null;
-    return { keyId: data.keyId as string, keySecret: data.keySecret as string };
-  } catch {
-    return null;
+  if (isConfigured()) {
+    try {
+      const snap = await getDoc(doc(getDb(), "settings", "razorpay"));
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data.keyId && data.keySecret) {
+          return { keyId: data.keyId as string, keySecret: data.keySecret as string };
+        }
+      }
+    } catch {
+      // fall through to the env fallback
+    }
   }
+
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (keyId && keySecret) return { keyId, keySecret };
+
+  return null;
 }

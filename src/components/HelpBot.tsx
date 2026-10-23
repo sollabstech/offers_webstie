@@ -65,7 +65,7 @@ export default function HelpBot() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Close help chat" : "Open help chat"}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark transition-all hover:scale-105 active:scale-95"
+        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark transition-all hover:scale-105 active:scale-95"
       >
         {open ? <ChevronDown size={22} /> : <MessageCircle size={24} />}
         {!open && (
@@ -77,7 +77,7 @@ export default function HelpBot() {
 
       {/* Chat popup */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 rounded-2xl border border-border bg-surface shadow-2xl flex flex-col overflow-hidden"
+        <div className="fixed bottom-36 right-4 md:bottom-24 md:right-6 z-50 w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-border bg-surface shadow-2xl flex flex-col overflow-hidden"
           style={{ maxHeight: "480px" }}>
 
           {/* Header */}

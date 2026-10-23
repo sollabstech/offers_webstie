@@ -42,8 +42,11 @@ export interface Product {
   variants?: ProductVariant[];
   reviews: Review[];
   stock: number;
-  badge?: "New" | "Best Seller" | "Deal" | "Limited";
+  badge?: "New" | "Best Seller" | "Deal" | "Limited" | "Sponsored";
   tags: string[];
+  /** Set while a vendor's paid promotion (approved by admin) is live; lower = shown first. */
+  sponsoredRank?: number;
+  sponsoredBid?: number;
 }
 
 export interface CartLine {

@@ -6,6 +6,7 @@ import type { Product } from "@/types";
 import ProductGrid from "@/components/ProductGrid";
 import FilterSidebar from "@/components/FilterSidebar";
 import MobileDrawer from "@/components/ui/MobileDrawer";
+import { sponsoredFirst } from "@/lib/firestoreProducts";
 
 type SortKey = "relevance" | "price-asc" | "price-desc" | "rating" | "newest";
 
@@ -65,6 +66,7 @@ export default function ProductListing({ heading, products, firestoreSupplementi
         list = [...list].sort((a, b) => (a.id < b.id ? 1 : -1));
         break;
       default:
+        list = sponsoredFirst(list);
         break;
     }
     return list;

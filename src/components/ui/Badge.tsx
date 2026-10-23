@@ -2,7 +2,7 @@ import { cn } from "@/utils/format";
 
 interface BadgeProps {
   children: React.ReactNode;
-  tone?: "accent" | "success" | "neutral";
+  tone?: "accent" | "success" | "neutral" | "sponsored";
   className?: string;
 }
 
@@ -11,6 +11,7 @@ export default function Badge({ children, tone = "accent", className }: BadgePro
     accent: "bg-accent text-white",
     success: "bg-success text-white",
     neutral: "bg-surface-alt text-text-muted border border-border",
+    sponsored: "bg-primary text-white",
   };
   return (
     <span

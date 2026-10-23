@@ -8,6 +8,15 @@ export async function POST(req: NextRequest) {
       currency?: string;
     };
 
+    // `amount` is in rupees here; Razorpay's minimum is 100 paise (₹1).
+    const amountPaise = Math.round(amount * 100);
+    if (!Number.isFinite(amountPaise) || amountPaise < 100) {
+      return NextResponse.json(
+        { error: "Amount must be at least ₹1 (100 paise)." },
+        { status: 400 }
+      );
+    }
+
     const config = await getRazorpayConfig();
     if (!config) {
       return NextResponse.json(
@@ -25,7 +34,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: Math.round(amount * 100), // paise
+        amount: amountPaise,
         currency,
         receipt: `rcpt_${Date.now()}`,
       }),
@@ -33,10 +42,11 @@ export async function POST(req: NextRequest) {
 
     if (!rzpRes.ok) {
       const err = await rzpRes.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: (err as { error?: { description?: string } }).error?.description ?? "Razorpay order creation failed" },
-        { status: rzpRes.status }
-      );
+      const description =
+        (err as { error?: { description?: string } }).error?.description ?? "Razorpay order creation failed";
+      // 401 from Razorpay = bad/rejected API keys.
+      const status = rzpRes.status === 401 ? 401 : rzpRes.status >= 500 ? 500 : rzpRes.status;
+      return NextResponse.json({ error: description }, { status });
     }
 
     const order = (await rzpRes.json()) as { id: string; amount: number; currency: string };

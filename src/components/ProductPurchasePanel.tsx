@@ -6,6 +6,7 @@ import { CheckCircle2, ShoppingCart } from "lucide-react";
 import type { Product } from "@/types";
 import QuantityStepper from "@/components/QuantityStepper";
 import Button from "@/components/ui/Button";
+import DeliveryEstimate from "@/components/DeliveryEstimate";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/utils/format";
 
@@ -95,6 +96,8 @@ export default function ProductPurchasePanel({ product }: ProductPurchasePanelPr
       <p className="text-sm text-success">
         {product.stock > 0 ? `In stock (${product.stock} available)` : "Out of stock"}
       </p>
+
+      <DeliveryEstimate productId={product.id} />
 
       {/* Desktop buttons */}
       <div className="hidden flex-col gap-2 sm:flex">

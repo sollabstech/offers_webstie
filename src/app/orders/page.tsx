@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Package, X } from "lucide-react";
+import { Package, X, Truck } from "lucide-react";
 import { useOrdersStore } from "@/store/ordersStore";
 import { useAuthState } from "@/hooks/useAuthState";
 import { fetchOrdersByUser, writeReturn, fetchReturnsByUser, type FirestoreOrder, type FirestoreReturn } from "@/lib/db";
@@ -269,6 +269,41 @@ export default function OrdersPage() {
                     );
                   })}
                 </div>
+
+                {/* Shipping / tracking bar — one row per vendor's shipment */}
+                {(order.shipments ?? []).filter((s) => s.status !== "not_shipped").map((s) => (
+                  <div key={s.vendorId} className="flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border bg-blue-50 px-5 py-2.5 text-xs font-medium text-blue-800">
+                    <Truck size={13} />
+                    {s.status === "cancelled" ? (
+                      <span>{s.vendorName}: shipment cancelled.</span>
+                    ) : (
+                      <span>
+                        {s.vendorName !== "Offerss.com" && <>{s.vendorName}: </>}
+                        Shipped via {s.courierName || "courier"}
+                        {s.awbCode && (
+                          <>
+                            {" "}&middot; {s.shippingMethod === "self" ? "Tracking ID" : "AWB"}{" "}
+                            <span className="font-mono font-semibold select-all">{s.awbCode}</span>
+                          </>
+                        )}
+                        {s.shippedAt && (
+                          <> &middot; {new Date(s.shippedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</>
+                        )}
+                        {s.deliveryStatus && (
+                          <>
+                            {" "}&middot; <span className="font-semibold">{s.deliveryStatus}</span>
+                            {s.lastLocation && <span className="text-blue-600"> ({s.lastLocation})</span>}
+                          </>
+                        )}
+                      </span>
+                    )}
+                    {s.trackingUrl && (
+                      <a href={s.trackingUrl} target="_blank" rel="noopener noreferrer" className="ml-auto font-semibold underline">
+                        Track package →
+                      </a>
+                    )}
+                  </div>
+                ))}
 
                 {/* Return status bar */}
                 {orderReturn && (

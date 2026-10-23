@@ -52,7 +52,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             className="object-cover transition-transform group-hover:scale-105"
           />
           {product.badge && (
-            <Badge className="absolute left-2 top-2" tone={product.badge === "Deal" ? "accent" : "neutral"}>
+            <Badge
+              className="absolute left-2 top-2"
+              tone={product.badge === "Deal" ? "accent" : product.badge === "Sponsored" ? "sponsored" : "neutral"}
+            >
               {product.badge}
             </Badge>
           )}

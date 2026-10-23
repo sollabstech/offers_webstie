@@ -59,6 +59,10 @@ export default function CategoryNav() {
     return () => unsub?.();
   }, []);
 
+  // No categories (still loading, or Firebase not configured) — render nothing
+  // instead of an empty navy strip that throws off the header's vertical balance.
+  if (cats.length === 0) return null;
+
   return (
     <nav aria-label="Category navigation" className="border-b border-border bg-primary text-white">
       <div className="mx-auto flex max-w-7xl items-center justify-center gap-4 overflow-x-auto px-4 py-2 no-scrollbar">
