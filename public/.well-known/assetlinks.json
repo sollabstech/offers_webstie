@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.sollabstech.offerss",
+      "sha256_cert_fingerprints": [
+        "B8:32:14:E9:AA:EC:ED:2F:B9:F6:82:B5:8C:B0:6D:BB:C9:DB:1B:D5:EE:D6:53:B0:22:23:3A:32:92:C4:9F:DF"
+      ]
+    }
+  }
+]
